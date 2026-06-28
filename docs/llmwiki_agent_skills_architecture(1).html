@@ -757,7 +757,7 @@
         <div class="flow-step">
           <div class="step-num">2</div>
           <strong>RAG 처리</strong>
-          <span class="muted">파싱 → 청킹 → 임베딩 → vector 저장</span>
+          <span class="muted">파싱 → 청킹 → 임베딩 → PostgreSQL/pgvector 저장</span>
         </div>
         <div class="flow-step">
           <div class="step-num">3</div>
@@ -876,8 +876,8 @@
   → extract_principles_or_patterns
   → retrieve_existing_wiki
   → generate_wiki_revision
-  → verify_citations
-  → save_revision</div>
+  → run_verification_graph
+  → save_revision_as_pending_acceptance</div>
         </div>
         <div>
           <h3>Graph 2 · Portfolio Review Graph</h3>
@@ -888,8 +888,7 @@
   → retrieve_wiki_context
   → detect_rule_conflicts
   → generate_status_report
-  → verify_numbers
-  → verify_citations
+  → run_verification_graph
   → format_response</div>
         </div>
         <div>
@@ -900,8 +899,7 @@
   → retrieve_asset_wiki
   → retrieve_related_rules
   → generate_stock_snapshot
-  → verify_numbers
-  → verify_claims
+  → run_verification_graph
   → format_response</div>
         </div>
         <div>
@@ -914,15 +912,18 @@
   → retrieve_market_wiki_context
   → connect_to_portfolio_exposure
   → generate_market_brief
-  → verify_market_claims</div>
+  → run_verification_graph</div>
         </div>
         <div>
-          <h3>Graph 5 · Verification Graph</h3>
-          <div class="codebox">draft_report
-  → check_numbers_against_metrics
-  → check_claims_against_sources
+<h3>Graph 5 · Verification Graph</h3>
+<div class="codebox">draft_report
+  → verify_numbers
+  → verify_citations
+  → check_unsupported_claims
+  → check_stale_data
   → check_recommendation_language
-  → assign_quality_score
+  → assess_rag_confidence
+  → quality_score
   → approve_or_request_revision</div>
         </div>
       </div>

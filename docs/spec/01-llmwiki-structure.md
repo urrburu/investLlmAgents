@@ -83,6 +83,18 @@ Agent는 위키 페이지를 바로 덮어쓰지 않는다. 모든 변경은 rev
 
 Revision에는 `revision_id`, `page_id`, `change_summary`, `before_refs`, `after_refs`, `verification_result_id`, `created_by_agent`, `created_at`을 남긴다.
 
+## PostgreSQL 저장 계약
+
+위키의 canonical 저장소는 PostgreSQL이다.
+
+| 위키 개념 | PostgreSQL 테이블 |
+|---|---|
+| 현재 승인된 페이지 | `wiki_pages` |
+| 변경 제안과 승인 이력 | `wiki_revisions` |
+| 원문과 citation 근거 | `source_documents`, `chunks` |
+
+Markdown 파일은 사람이 읽기 위한 export 형식으로만 사용한다. Agent가 위키를 갱신할 때는 `wiki_revisions` row를 만들고, 사용자가 승인한 뒤 `wiki_pages.current_revision_id`와 `wiki_pages.body`를 갱신한다.
+
 ## 위키 성격 정의
 
 > 위키는 "추천을 저장하는 공간"이 아니라  

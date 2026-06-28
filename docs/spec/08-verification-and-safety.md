@@ -11,6 +11,8 @@
 | `needs_human_review` | 해석 또는 출처 판단에 사람 확인 필요 | 확인 질문 목록 |
 | `blocked` | 안전하지 않거나 검증 불가 | 차단 사유와 필요한 입력 |
 
+상태 enum은 [07-data-contracts.md](07-data-contracts.md)의 Canonical 상태 enum을 따른다. 최종 사용자에게 보이는 리포트는 `passed`일 때만 생성한다.
+
 ## 필수 검증 게이트
 
 | 게이트 | 검사 내용 | 실패 시 |
@@ -43,6 +45,72 @@
 | `UNSUPPORTED_RECOMMENDATION` | 추천처럼 보이는 표현 생성 | 문장 수정 또는 출력 차단 |
 | `LOW_RAG_CONFIDENCE` | 검색 근거 부족 | 낮은 신뢰도 표시, 추가 자료 요청 |
 | `PARTIAL_EXTERNAL_OUTAGE` | 외부 API 일부 실패 | 가능한 섹션만 생성하고 누락 표시 |
+
+## Rescue payload 예시
+
+### 숫자 검증 실패
+
+숫자 불일치가 있으면 해당 숫자는 최종 리포트에 넣지 않는다. 대신 계산 로그와 필요한 입력을 반환한다.
+
+```json
+{
+  "verification_status": "blocked",
+  "error_code": "NUMBER_MISMATCH",
+  "message": "포트폴리오 비중 계산 결과가 원천 데이터와 일치하지 않습니다.",
+  "blocked_reasons": [
+    "AAPL market_value=1952.0 이지만 total_portfolio_value 계산에 사용된 값은 1900.0입니다."
+  ],
+  "required_inputs": [
+    "최신 포트폴리오 CSV를 다시 업로드하거나 market_value 계산 로그를 확인한다."
+  ],
+  "safe_sections": [],
+  "hidden_sections": ["portfolio_weights", "return_summary"]
+}
+```
+
+### 사람 확인이 필요한 ticker 모호성
+
+후보가 여러 개일 때는 임의로 고르지 않고 후보 목록을 보여준다.
+
+```json
+{
+  "verification_status": "needs_human_review",
+  "error_code": "AMBIGUOUS_TICKER",
+  "message": "요청한 ticker가 여러 종목과 일치합니다.",
+  "questions": [
+    {
+      "question": "분석할 종목을 선택해 주세요.",
+      "candidates": [
+        {"ticker": "BRK.A", "name": "Berkshire Hathaway Inc. Class A", "exchange": "NYSE"},
+        {"ticker": "BRK.B", "name": "Berkshire Hathaway Inc. Class B", "exchange": "NYSE"}
+      ]
+    }
+  ],
+  "safe_sections": [],
+  "hidden_sections": ["stock_snapshot"]
+}
+```
+
+### 외부 API 일부 실패
+
+부분 실패는 부분 성공과 분리해 표시한다. 가능한 섹션만 생성하고, 누락된 섹션은 명시한다.
+
+```json
+{
+  "verification_status": "needs_human_review",
+  "error_code": "PARTIAL_EXTERNAL_OUTAGE",
+  "message": "가격 데이터는 조회했지만 공시 API가 응답하지 않았습니다.",
+  "safe_sections": ["price_summary"],
+  "hidden_sections": ["filing_summary", "thesis_change_check"],
+  "warnings": [
+    "공시 기반 주장은 생성하지 않았습니다.",
+    "뉴스 기반 요약에는 source_refs와 as_of를 표시해야 합니다."
+  ],
+  "required_inputs": [
+    "공시 API를 재시도하거나 공시 URL을 직접 제공한다."
+  ]
+}
+```
 
 ## Failure Modes Registry
 

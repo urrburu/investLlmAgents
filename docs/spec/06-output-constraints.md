@@ -44,7 +44,7 @@
 
 - 모든 숫자에는 계산 함수와 원천 데이터 timestamp가 있어야 한다.
 - 모든 주요 주장에는 `source_refs`가 있어야 한다.
-- `verification_status`가 `passed`가 아니면 최종 리포트가 아니라 검토 요청으로 출력한다.
+- `verification_status`가 `passed`가 아니면 최종 리포트가 아니라 검토 요청으로 출력한다. 상태값은 [07-data-contracts.md](07-data-contracts.md)의 Canonical 상태 enum을 따른다.
 - 최신성이 중요한 데이터는 `as_of`를 표시한다.
 - 금지 표현 검사를 통과하지 못한 문장은 Persona Formatter로 보내지 않는다.
 
@@ -52,7 +52,7 @@
 
 ## 구현 우선순위
 
-1. **데이터 모델** — 책, 매매일지, 포트폴리오, 위키 페이지 스키마
+1. **데이터 모델 / PostgreSQL schema** — 책, 매매일지, 포트폴리오, 위키 페이지, revision, 검증 결과 테이블
 2. **RAG 파이프라인** — 청킹, 임베딩, 검색, citation 연결
 3. **위키 갱신 Agent** — 원칙/패턴 추출과 페이지 revision 생성
 4. **포트폴리오 점검 Agent** — 계산 + 위키 참조 + 리포트 생성
