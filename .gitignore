@@ -6,3 +6,6 @@
 .langgraph_api/
 
 .idea/
+.venv/
+__pycache__/
+*.py[cod]
