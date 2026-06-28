@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Investment LLMwiki & Agent Skills Architecture</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --card: #ffffff;
+      --muted: #64748b;
+      --text: #0f172a;
+      --white: #f8fafc;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --green: #16a34a;
+      --green-light: #dcfce7;
+      --purple: #7c3aed;
+      --purple-light: #ede9fe;
+      --orange: #ea580c;
+      --orange-light: #ffedd5;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --gray: #e5e7eb;
+      --line: #cbd5e1;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      color: var(--text);
+      background: #f1f5f9;
+      line-height: 1.6;
+    }
+
+    .hero {
+      background: radial-gradient(circle at top left, #334155 0, #0f172a 44%, #020617 100%);
+      color: var(--white);
+      padding: 56px 32px 42px;
+    }
+
+    .hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 999px;
+      color: #cbd5e1;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 54px);
+      line-height: 1.12;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      max-width: 860px;
+      margin-top: 18px;
+      color: #cbd5e1;
+      font-size: 18px;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: -24px auto 80px;
+      padding: 0 24px;
+    }
+
+    .section {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 30px;
+      margin-bottom: 26px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: 26px;
+      letter-spacing: -0.03em;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 880px) {
+      .grid-3, .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .section {
+        padding: 22px;
+      }
+    }
+
+    .layer-card {
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--gray);
+      min-height: 240px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .layer-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+    }
+
+    .wiki::before { background: var(--blue); }
+    .agent::before { background: var(--purple); }
+    .skill::before { background: var(--green); }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .tag.blue { background: var(--blue-light); color: #1e40af; }
+    .tag.purple { background: var(--purple-light); color: #5b21b6; }
+    .tag.green { background: var(--green-light); color: #166534; }
+    .tag.orange { background: var(--orange-light); color: #9a3412; }
+    .tag.red { background: var(--red-light); color: #991b1b; }
+
+    ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .swimlane {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      min-height: 94px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .lane-title {
+      color: #fff;
+      padding: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      letter-spacing: -0.02em;
+    }
+
+    .lane-title.source { background: #334155; }
+    .lane-title.wiki { background: var(--blue); }
+    .lane-title.agent { background: var(--purple); }
+    .lane-title.skill { background: var(--green); }
+    .lane-title.output { background: var(--orange); }
+
+    .lane-content {
+      padding: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .arrow {
+      color: #94a3b8;
+      font-weight: 900;
+      font-size: 20px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 980px) {
+      .flow {
+        grid-template-columns: 1fr;
+      }
+      .swimlane {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .flow-step {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .flow-step strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .step-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      font-size: 14px;
+    }
+
+    .matrix th {
+      background: #0f172a;
+      color: #fff;
+      padding: 13px;
+      text-align: left;
+    }
+
+    .matrix td {
+      padding: 13px;
+      border-top: 1px solid #e2e8f0;
+      vertical-align: top;
+      background: #fff;
+    }
+
+    .matrix tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .codebox {
+      background: #020617;
+      color: #e2e8f0;
+      border-radius: 16px;
+      padding: 18px;
+      overflow: auto;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre;
+    }
+
+    .warning {
+      border: 1px solid #fed7aa;
+      background: #fff7ed;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .success {
+      border: 1px solid #bbf7d0;
+      background: #f0fdf4;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .split-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .legend span {
+      font-size: 13px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .mini {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 20px 0;
+    }
+
+    .big-note {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      padding: 20px;
+      background: #f8fafc;
+      border: 1px dashed #94a3b8;
+      border-radius: 16px;
+    }
+
+    .nowrap {
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Personal Investment LLMwiki · Agent · Skills 정리</div>
+      <h1>LLMwiki와 Agent Skills를 분리한<br/>개인 투자 점검 시스템 구조</h1>
+      <p class="subtitle">
+        이 문서는 책의 투자 원칙, 매매일지, 현재 포트폴리오를 기반으로 한 LLMwiki와
+        정기 점검/종목 분석/포트폴리오 분석을 수행하는 LangGraph Agent, 그리고 각 Agent가 호출하는 Skills를 명확히 구분한다.
+      </p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section class="section">
+      <h2>1. 한 문장 정의</h2>
+      <div class="big-note">
+        LLMwiki는 “나의 투자 지식 저장소”이고, Agents는 “그 지식을 사용해 판단 흐름을 실행하는 작업자”이며, Skills는 “Agent가 호출하는 개별 기능”이다.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>2. 세 계층의 책임 분리</h2>
+      <div class="grid grid-3">
+        <div class="layer-card wiki">
+          <div class="tag blue">LLMwiki · Knowledge Layer</div>
+          <h3>무엇을 저장하나</h3>
+          <p class="muted">책, 매매일지, 현재 포트폴리오, 과거 리포트, 종목별 메모를 구조화해서 저장한다.</p>
+          <ul>
+            <li>투자 원칙</li>
+            <li>내 반복 실수</li>
+            <li>종목별 thesis</li>
+            <li>포트폴리오 현황</li>
+            <li>출처와 근거</li>
+          </ul>
+        </div>
+
+        <div class="layer-card agent">
+          <div class="tag purple">Agents · Workflow Layer</div>
+          <h3>무엇을 실행하나</h3>
+          <p class="muted">LangGraph로 정기 점검, 수동 종목 분석, 포트폴리오 분석, 위키 갱신 흐름을 실행한다.</p>
+          <ul>
+            <li>정기 현황 점검</li>
+            <li>종목 분석 요청 처리</li>
+            <li>포트폴리오 분석 요청 처리</li>
+            <li>책/일지/포트폴리오 연결</li>
+            <li>검증 후 리포트 생성</li>
+          </ul>
+        </div>
+
+        <div class="layer-card skill">
+          <div class="tag green">Skills · Tool Layer</div>
+          <h3>무엇을 호출하나</h3>
+          <p class="muted">Agent가 필요할 때 호출하는 작은 기능 단위다. 계산, 검색, 청킹, 임베딩, 검증, 포맷팅이 여기에 속한다.</p>
+          <ul>
+            <li>chunking</li>
+            <li>embedding</li>
+            <li>price fetch</li>
+            <li>portfolio metrics</li>
+            <li>citation verification</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>3. 전체 시스템 지도</h2>
+      <div class="architecture">
+        <div class="swimlane">
+          <div class="lane-title source">입력 소스</div>
+          <div class="lane-content">
+            <span class="pill">투자서 PDF/메모</span>
+            <span class="pill">매매일지</span>
+            <span class="pill">현재 포트폴리오</span>
+            <span class="pill">과거 분석 리포트</span>
+            <span class="pill">뉴스/공시/가격 데이터</span>
+          </div>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-title wiki">LLMwiki</div>
+          <div class="lane-content">
+            <span class="pill">/wiki/books/principles</span>
+            <span class="pill">/wiki/journal/patterns</span>
+            <span class="pill">/wiki/portfolio/current</span>
+            <span class="pill">/wiki/assets/{ticker}</span>
+            <span class="pill">/wiki/rules/checklists</span>
+          </div>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-title agent">Agents</div>
+          <div class="lane-content">
+            <span class="pill">정기 점검 Agent</span>
+            <span class="pill">종목 분석 Agent</span>
+            <span class="pill">포트폴리오 분석 Agent</span>
+            <span class="pill">LLMwiki 갱신 Agent</span>
+            <span class="pill">검증 Agent</span>
+          </div>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-title skill">Skills</div>
+          <div class="lane-content">
+            <span class="pill">문서 파싱</span>
+            <span class="pill">청킹/임베딩</span>
+            <span class="pill">RAG 검색</span>
+            <span class="pill">가격/수익률 계산</span>
+            <span class="pill">출처 검증</span>
+            <span class="pill">리포트 포맷팅</span>
+          </div>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-title output">출력</div>
+          <div class="lane-content">
+            <span class="pill">일간/주간 현황 점검</span>
+            <span class="pill">종목 Snapshot</span>
+            <span class="pill">포트폴리오 리스크 리포트</span>
+            <span class="pill">위키 페이지 초안</span>
+            <span class="pill">확인 필요 항목</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>4. 혼동되기 쉬운 부분을 명확히 분리</h2>
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>LLMwiki</th>
+            <th>Agent</th>
+            <th>Skill</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>정체</strong></td>
+            <td>지식베이스 / 위키 / memory</td>
+            <td>작업 흐름을 실행하는 orchestrator</td>
+            <td>하나의 호출 가능한 기능</td>
+          </tr>
+          <tr>
+            <td><strong>예시</strong></td>
+            <td>“손절 기준 없는 진입” 페이지</td>
+            <td>“오늘 포트폴리오 점검” 실행</td>
+            <td>수익률 계산 함수, 문서 임베딩 함수</td>
+          </tr>
+          <tr>
+            <td><strong>상태</strong></td>
+            <td>장기 저장됨</td>
+            <td>실행 중 상태를 가짐</td>
+            <td>보통 stateless, 입력→출력</td>
+          </tr>
+          <tr>
+            <td><strong>변경 주체</strong></td>
+            <td>Agent가 revision으로 갱신 제안</td>
+            <td>Scheduler 또는 사용자 요청으로 실행</td>
+            <td>Agent가 필요 시 호출</td>
+          </tr>
+          <tr>
+            <td><strong>성공 기준</strong></td>
+            <td>정확하고 연결된 지식 구조</td>
+            <td>업무 흐름 완료 및 검증 통과</td>
+            <td>정확한 단일 기능 수행</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>5. LLMwiki의 정보 구조</h2>
+      <div class="grid grid-2">
+        <div>
+          <h3>위키 네임스페이스</h3>
+          <div class="codebox">/wiki/books
+  /principles
+  /risk-management
+  /position-sizing
+  /psychology
+
+/wiki/journal
+  /winning-patterns
+  /mistake-patterns
+  /emotion-driven-trades
+  /postmortems
+
+/wiki/portfolio
+  /current
+  /allocation
+  /risk-exposure
+  /change-history
+
+/wiki/assets
+  /{ticker}
+  /{ticker}/thesis
+  /{ticker}/events
+  /{ticker}/risks
+
+/wiki/rules
+  /buy-checklist
+  /sell-checklist
+  /rebalance-rules
+  /invalidation-rules</div>
+        </div>
+        <div>
+          <h3>각 페이지가 담아야 하는 것</h3>
+          <ul>
+            <li><strong>정의:</strong> 이 개념/종목/원칙이 무엇인지</li>
+            <li><strong>출처:</strong> 책, 매매일지, 리포트, 뉴스, 공시</li>
+            <li><strong>내 투자와 연결:</strong> 내 매매 패턴 또는 현재 포트폴리오와의 관련성</li>
+            <li><strong>충돌/위험 신호:</strong> 원칙과 현재 상태가 어긋나는 지점</li>
+            <li><strong>확인할 항목:</strong> 다음 점검 때 다시 볼 질문</li>
+          </ul>
+          <div class="warning" style="margin-top:16px;">
+            <strong>중요:</strong> 위키는 “추천을 저장하는 공간”이 아니라 “근거, 원칙, 관찰, 복기, 현재 상태를 연결하는 공간”이다.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>6. Agent 종류와 역할</h2>
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Trigger</th>
+            <th>읽는 지식</th>
+            <th>호출하는 Skills</th>
+            <th>출력</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>LLMwiki 갱신 Agent</strong></td>
+            <td>책/일지/문서 업로드</td>
+            <td>기존 위키, 새 원문</td>
+            <td>파싱, 청킹, 임베딩, entity 추출, citation 검증</td>
+            <td>위키 페이지 생성/수정 초안</td>
+          </tr>
+          <tr>
+            <td><strong>정기 점검 Agent</strong></td>
+            <td>매일/매주 스케줄</td>
+            <td>투자 원칙, 매매 패턴, 현재 포트폴리오</td>
+            <td>가격 조회, 포트폴리오 계산, RAG 검색, 리포트 생성</td>
+            <td>현황 점검 리포트</td>
+          </tr>
+          <tr>
+            <td><strong>시황 분석 Agent</strong></td>
+            <td>매일 장 전/장 후 또는 사용자 요청</td>
+            <td>시장 위키, 과거 시황 메모, 포트폴리오 노출, 투자 원칙</td>
+            <td>시장 데이터 조회, 매크로 지표 수집, Risk-on/Risk-off 판단, 시황 요약</td>
+            <td>시장 국면 판단과 포트폴리오 점검 포인트</td>
+          </tr>
+          <tr>
+            <td><strong>종목 분석 Agent</strong></td>
+            <td>사용자 요청</td>
+            <td>종목 위키, thesis, 관련 원칙, 과거 메모</td>
+            <td>티커 정규화, 뉴스/공시 수집, 재무/가격 조회, 출처 검증</td>
+            <td>종목 Snapshot / 변화 요약</td>
+          </tr>
+          <tr>
+            <td><strong>포트폴리오 분석 Agent</strong></td>
+            <td>사용자 요청 또는 정기 실행</td>
+            <td>포트폴리오 위키, 매매일지, 투자 규칙</td>
+            <td>비중 계산, 수익률 계산, 집중도 분석, 리스크 감지</td>
+            <td>포트폴리오 상태와 점검 항목</td>
+          </tr>
+          <tr>
+            <td><strong>검증 Agent</strong></td>
+            <td>모든 리포트 생성 후</td>
+            <td>계산 결과, 원문 chunk, citation</td>
+            <td>숫자 검증, citation 검증, 금지 표현 검사</td>
+            <td>검증 통과/보류/수정 요청</td>
+          </tr>
+          <tr>
+            <td><strong>Persona Formatter Agent</strong></td>
+            <td>최종 응답 직전</td>
+            <td>검증된 분석 결과</td>
+            <td>스타일 변환, 길이 조정, 출력 포맷팅</td>
+            <td>존나조쿤/떠들이 등 스타일화된 답변</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>7. Skills 카탈로그</h2>
+      <div class="grid grid-3">
+        <div class="layer-card skill">
+          <div class="tag green">RAG Skills</div>
+          <ul>
+            <li>parse_document</li>
+            <li>chunk_document</li>
+            <li>embed_chunks</li>
+            <li>retrieve_related_chunks</li>
+            <li>rerank_context</li>
+          </ul>
+        </div>
+        <div class="layer-card skill">
+          <div class="tag green">Portfolio Skills</div>
+          <ul>
+            <li>normalize_ticker</li>
+            <li>fetch_price_data</li>
+            <li>calculate_returns</li>
+            <li>calculate_weights</li>
+            <li>detect_concentration</li>
+          </ul>
+        </div>
+        <div class="layer-card skill">
+          <div class="tag green">Knowledge Skills</div>
+          <ul>
+            <li>extract_principles</li>
+            <li>extract_trade_patterns</li>
+            <li>link_rule_to_trade</li>
+            <li>detect_rule_conflict</li>
+            <li>create_wiki_revision</li>
+          </ul>
+        </div>
+        <div class="layer-card skill">
+          <div class="tag green">Verification Skills</div>
+          <ul>
+            <li>verify_numbers</li>
+            <li>verify_citations</li>
+            <li>check_unsupported_claims</li>
+            <li>check_recommendation_language</li>
+            <li>quality_score</li>
+          </ul>
+        </div>
+        <div class="layer-card skill">
+          <div class="tag green">Report Skills</div>
+          <ul>
+            <li>generate_stock_snapshot</li>
+            <li>generate_portfolio_report</li>
+            <li>generate_daily_check</li>
+            <li>generate_weekly_review</li>
+            <li>format_persona_output</li>
+          </ul>
+        </div>
+        <div class="layer-card skill">
+          <div class="tag green">Data Skills</div>
+          <ul>
+            <li>fetch_news</li>
+            <li>fetch_filings</li>
+            <li>fetch_financials</li>
+            <li>load_journal_entries</li>
+            <li>load_current_holdings</li>
+          </ul>
+        </div>
+        <div class="layer-card skill">
+          <div class="tag green">Market Regime Skills</div>
+          <ul>
+            <li>fetch_market_indices</li>
+            <li>fetch_macro_indicators</li>
+            <li>analyze_sector_rotation</li>
+            <li>detect_risk_on_off</li>
+            <li>generate_market_brief</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>8. 대표 실행 흐름 A: LLMwiki 갱신</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <strong>원문 입력</strong>
+          <span class="muted">책, 매매일지, 리포트, 메모 업로드</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <strong>RAG 처리</strong>
+          <span class="muted">파싱 → 청킹 → 임베딩 → vector 저장</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <strong>지식 추출</strong>
+          <span class="muted">원칙, 실수 패턴, 종목 thesis 추출</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <strong>위키 초안</strong>
+          <span class="muted">새 페이지/수정/병합 제안 생성</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <strong>검증/승인</strong>
+          <span class="muted">citation 검증 후 저장 또는 승인 대기</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>9. 대표 실행 흐름 B: 정기 포트폴리오 점검</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <strong>스케줄 실행</strong>
+          <span class="muted">일간/주간 자동 트리거</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <strong>현재 상태 계산</strong>
+          <span class="muted">비중, 손익, 변동, 집중도 계산</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <strong>위키 참조</strong>
+          <span class="muted">책 원칙, 매매 실수, 기존 thesis 검색</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <strong>충돌 감지</strong>
+          <span class="muted">원칙과 현재 포트폴리오의 불일치 탐지</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <strong>리포트 생성</strong>
+          <span class="muted">추천 없이 현황과 확인 항목 정리</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>10. 대표 실행 흐름 C: 시황분석 · Risk-on/Risk-off 판단</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <strong>시장 데이터 수집</strong>
+          <span class="muted">지수, 금리, 환율, 원자재, 변동성, 섹터 흐름 수집</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <strong>매크로/수급 점검</strong>
+          <span class="muted">VIX, 미 국채금리, 달러, 신용스프레드, 섹터 로테이션 확인</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <strong>Risk-on/off 판단</strong>
+          <span class="muted">위험자산 선호/회피 국면을 rule + LLM 해석으로 분류</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <strong>포트폴리오 영향 연결</strong>
+          <span class="muted">현재 보유 섹터, 성장주/방어주, 현금 비중과 연결</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <strong>시황 브리프 생성</strong>
+          <span class="muted">오늘의 시장 국면, 근거, 확인할 리스크를 요약</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid grid-2">
+        <div class="success">
+          <h3>Risk-on 판단에 쓰는 대표 신호</h3>
+          <ul>
+            <li>주가지수 상승과 시장 breadth 개선</li>
+            <li>VIX 하락 또는 안정</li>
+            <li>하이일드/성장주/경기민감 섹터 강세</li>
+            <li>신용스프레드 축소</li>
+            <li>달러 약세 또는 위험통화 강세</li>
+          </ul>
+        </div>
+        <div class="warning">
+          <h3>Risk-off 판단에 쓰는 대표 신호</h3>
+          <ul>
+            <li>주가지수 하락과 방어 섹터 상대 강세</li>
+            <li>VIX 급등 또는 변동성 확대</li>
+            <li>미 국채, 달러, 금 등 안전자산 선호</li>
+            <li>신용스프레드 확대</li>
+            <li>유동성/금리/지정학 리스크 부각</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>11. LangGraph 관점의 Graph 분리</h2>
+      <div class="grid grid-2">
+        <div>
+          <h3>Graph 1 · Wiki Indexing Graph</h3>
+          <div class="codebox">ingest_source
+  → parse_document
+  → chunk_document
+  → embed_chunks
+  → extract_principles_or_patterns
+  → retrieve_existing_wiki
+  → generate_wiki_revision
+  → verify_citations
+  → save_revision</div>
+        </div>
+        <div>
+          <h3>Graph 2 · Portfolio Review Graph</h3>
+          <div class="codebox">scheduled_or_manual_trigger
+  → load_current_portfolio
+  → fetch_market_data
+  → calculate_metrics
+  → retrieve_wiki_context
+  → detect_rule_conflicts
+  → generate_status_report
+  → verify_numbers
+  → verify_citations
+  → format_response</div>
+        </div>
+        <div>
+          <h3>Graph 3 · Stock Snapshot Graph</h3>
+          <div class="codebox">stock_request
+  → normalize_ticker
+  → fetch_price_financial_news
+  → retrieve_asset_wiki
+  → retrieve_related_rules
+  → generate_stock_snapshot
+  → verify_numbers
+  → verify_claims
+  → format_response</div>
+        </div>
+        <div>
+          <h3>Graph 4 · Market Regime Graph</h3>
+          <div class="codebox">market_check_trigger
+  → fetch_indices_rates_fx_volatility
+  → fetch_sector_and_factor_rotation
+  → calculate_market_regime_signals
+  → detect_risk_on_off
+  → retrieve_market_wiki_context
+  → connect_to_portfolio_exposure
+  → generate_market_brief
+  → verify_market_claims</div>
+        </div>
+        <div>
+          <h3>Graph 5 · Verification Graph</h3>
+          <div class="codebox">draft_report
+  → check_numbers_against_metrics
+  → check_claims_against_sources
+  → check_recommendation_language
+  → assign_quality_score
+  → approve_or_request_revision</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>12. 추천/비추천이 아니라 현황 점검으로 제한</h2>
+      <div class="grid grid-2">
+        <div class="success">
+          <h3>허용되는 출력</h3>
+          <ul>
+            <li>현재 포트폴리오 구성과 변화</li>
+            <li>종목별 최근 이벤트 요약</li>
+            <li>책 원칙과 현재 행동의 충돌 가능성</li>
+            <li>과거 매매 실수와 유사한 패턴</li>
+            <li>확인해야 할 질문 목록</li>
+          </ul>
+        </div>
+        <div class="warning">
+          <h3>제한해야 하는 출력</h3>
+          <ul>
+            <li>지금 매수/매도하라는 직접 지시</li>
+            <li>목표가/수익률 보장</li>
+            <li>자동매매 실행</li>
+            <li>근거 없는 확정적 전망</li>
+            <li>출처 없는 투자 판단</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>13. 최종 MVP 경계</h2>
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>단계</th>
+            <th>포함</th>
+            <th>제외</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>MVP 1</strong></td>
+            <td>책/매매일지/포트폴리오 업로드, 청킹/임베딩, 위키 초안, 포트폴리오 현황 리포트</td>
+            <td>자동 매매, 목표가 제시, 완전 자동 발행</td>
+          </tr>
+          <tr>
+            <td><strong>MVP 2</strong></td>
+            <td>정기 실행, 기존 리포트와 비교, 종목별 Snapshot, Persona Formatter</td>
+            <td>복잡한 파생상품 분석, 세금 최적화</td>
+          </tr>
+          <tr>
+            <td><strong>MVP 3</strong></td>
+            <td>GitHub/Notion/브로커 API 연동, 고도화된 검증, 대시보드</td>
+            <td>규제상 투자자문으로 해석될 수 있는 자동 의사결정</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>14. 구현 우선순위</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <strong>데이터 모델</strong>
+          <span class="muted">책, 매매일지, 포트폴리오, 위키 페이지 스키마</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <strong>RAG 파이프라인</strong>
+          <span class="muted">청킹, 임베딩, 검색, citation 연결</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <strong>위키 갱신 Agent</strong>
+          <span class="muted">원칙/패턴 추출과 페이지 revision 생성</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <strong>포트폴리오 점검 Agent</strong>
+          <span class="muted">계산 + 위키 참조 + 리포트 생성</span>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <strong>검증/스타일</strong>
+          <span class="muted">숫자/출처 검증 후 GPT 스타일 포맷팅</span>
+        </div>
+      </div>
+      <div class="legend">
+        <span>핵심 원칙: 숫자는 코드가 계산</span>
+        <span>근거는 LLMwiki/RAG에서 검색</span>
+        <span>LLM은 해석과 요약 담당</span>
+        <span>LangGraph는 흐름과 검증 담당</span>
+        <span>시황분석은 Risk-on/Risk-off 판단 후 포트폴리오 노출과 연결</span>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>
