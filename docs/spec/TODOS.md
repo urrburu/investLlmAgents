@@ -9,6 +9,9 @@
 | DB | PostgreSQL을 canonical 저장소로 사용한다. | [07-data-contracts.md](07-data-contracts.md) |
 | 위키 저장 | 위키 페이지와 revision은 DB row로 저장한다. Markdown은 export 형식이다. | [01-llmwiki-structure.md](01-llmwiki-structure.md) |
 | Graph state | Agent 실행 상태는 `agent_runs` table에 저장한다. | [04-langgraph-graphs.md](04-langgraph-graphs.md) |
+| MVP 1 사용자 표면 | 웹 대시보드보다 Markdown 리포트, CLI/API 응답, DB-backed revision review를 먼저 구현한다. | [09-product-design.md](09-product-design.md) |
+| 승인 UX | 위키 revision은 before/after diff, 근거, 검증 결과를 본 뒤 `approve`, `reject`, `request_changes` 중 하나로 처리한다. | [09-product-design.md](09-product-design.md) |
+| 검증 실패 표현 | `blocked`와 `needs_human_review`는 최종 리포트처럼 보이지 않게 rescue 응답으로 분리한다. | [09-product-design.md](09-product-design.md) |
 
 ## 뒤로 미룬 범위
 
@@ -27,7 +30,7 @@
 | 벡터 저장 | PostgreSQL `pgvector` 우선 | embedding dimension, index 방식, 확장 설치 가능 여부 |
 | 가격 데이터 공급원 | MVP에서는 교체 가능한 adapter로 감쌈 | 사용자가 실제로 접근 가능한 API |
 | 스케줄러 | 일간/주간 실행만 가정 | 로컬 cron, GitHub Actions, 서버 배치 중 선택 |
-| 승인 UX | revision row를 사람이 승인한다고 가정 | CLI, 웹 UI, DB-backed diff 중 어떤 흐름이 좋은지 |
+| 웹 UI 시점 | MVP 1은 Markdown/CLI/API 우선 | MVP 2 또는 MVP 3에서 웹 대시보드를 시작할 조건 |
 
 ## 구현 전 질문
 
@@ -35,8 +38,8 @@
 - 투자서 PDF와 매매일지 중 어느 원천을 먼저 넣을 것인가?
 - PostgreSQL schema migration 도구는 Alembic으로 갈 것인가, SQL 파일 기반으로 시작할 것인가?
 - `pgvector`를 MVP에 바로 포함할 것인가, 아니면 `embedding_id`만 남기고 검색 저장소를 뒤로 미룰 것인가?
-- 최종 리포트는 Markdown 파일, 웹 화면, 채팅 응답 중 어디에 먼저 출력할 것인가?
-- 검증 실패 리포트는 사용자에게 얼마나 자세히 보여줄 것인가?
+- Markdown 리포트 템플릿은 CLI 출력과 API 응답에서 같은 renderer를 공유할 것인가?
+- 웹 UI는 어느 MVP 완료 기준을 만족한 뒤 시작할 것인가?
 
 ## 다음 구현 작업 후보
 
@@ -48,6 +51,8 @@
 6. Verification Graph의 `verify_citations`, `check_unsupported_claims`, `check_recommendation_language` 프로토타입을 작성한다.
 7. [08-verification-and-safety.md](08-verification-and-safety.md)의 rescue payload 예시를 반환하는 실패 케이스 테스트를 추가한다.
 8. 포트폴리오 점검 리포트 Markdown 템플릿을 작성하고 `verification_status != passed`일 때는 검토 요청 템플릿으로 분기한다.
+9. [09-product-design.md](09-product-design.md)의 `ReportDraft.sections`, `actions`, `safe_sections`, `hidden_sections` 요구를 실제 Pydantic 모델과 migration에 반영한다.
+10. 위키 revision review의 `approve`, `reject`, `request_changes` action payload와 audit trail을 설계한다.
 
 ## 문서 유지 규칙
 

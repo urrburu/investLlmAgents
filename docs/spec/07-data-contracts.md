@@ -58,6 +58,7 @@ PostgreSQL을 system of record로 사용한다. Markdown 파일은 export/import
 | `WikiRevisionStatus` | `draft`, `verified`, `needs_human_review`, `rejected`, `accepted` | `WikiRevision` |
 | `RunStatus` | `running`, `completed`, `needs_human_review`, `blocked`, `failed` | `RunState` |
 | `TriggerType` | `manual`, `schedule`, `upload`, `follow_up` | `RunState.trigger_type` |
+| `RevisionReviewAction` | `approve`, `reject`, `request_changes` | 사용자가 `WikiRevision`을 검토한 뒤 남기는 명시적 action |
 
 상태 의미:
 
@@ -118,10 +119,13 @@ PostgreSQL을 system of record로 사용한다. Markdown 파일은 export/import
 | `change_summary` | 변경 요약 |
 | `before_refs` | 변경 전 기준이 된 page/revision/source ID 목록 |
 | `after_refs` | 변경 후 연결될 page/revision/source ID 목록 |
+| `diff_summary` | 사용자에게 보여줄 before/after 변경 요약 |
 | `proposed_body` | 제안 본문 |
 | `source_refs` | 변경 근거 |
 | `verification_result_id` | 검증 결과 ID |
 | `status` | `draft`, `verified`, `needs_human_review`, `rejected`, `accepted` |
+| `review_actions` | 사용자가 남긴 `approve`, `reject`, `request_changes` action 이력 |
+| `requested_changes` | 사용자가 수정을 요청한 경우의 구체적 요청 목록 |
 | `created_by_agent` | 생성 Agent |
 | `created_at` | 생성 시각 |
 
@@ -156,10 +160,11 @@ PostgreSQL을 system of record로 사용한다. Markdown 파일은 export/import
 |---|---|
 | `report_id` | 리포트 ID |
 | `report_type` | `daily_check`, `weekly_review`, `stock_snapshot`, `portfolio_report`, `market_brief` |
-| `sections` | 구조화된 섹션 목록 |
+| `sections` | 구조화된 섹션 목록. 각 섹션은 `section_id`, `title`, `status`, `display_order`, `source_refs`, `hidden_reason`을 가진다. |
 | `claims` | 검증 대상 주장 목록 |
 | `numbers` | 검증 대상 숫자 목록 |
 | `source_refs` | 전체 출처 목록 |
+| `actions` | 사용자에게 보여줄 다음 행동 목록. `action_id`, `label`, `action_type`, `required_input_schema`를 가진다. |
 | `verification_status` | `pending`, `passed`, `needs_revision`, `needs_human_review`, `blocked` |
 
 ## VerificationResult
@@ -174,6 +179,9 @@ PostgreSQL을 system of record로 사용한다. Markdown 파일은 export/import
 | `language_checks` | 금지 표현 검사 결과 |
 | `staleness_checks` | 데이터 최신성 검사 결과 |
 | `required_fixes` | 수정이 필요한 항목 |
+| `required_inputs` | 사람이 제공해야 하는 입력 또는 선택지 |
+| `safe_sections` | 부분 실패 시 사용자에게 보여도 되는 section ID 목록 |
+| `hidden_sections` | 검증 실패 때문에 숨긴 section ID 목록 |
 | `quality_score` | 0~100 점수 |
 
 ## RunState
@@ -184,6 +192,9 @@ PostgreSQL을 system of record로 사용한다. Markdown 파일은 export/import
 | `agent_name` | 실행 Agent |
 | `trigger_type` | `manual`, `schedule`, `upload`, `follow_up` |
 | `started_at` | 시작 시각 |
+| `current_node` | 현재 실행 중이거나 마지막으로 완료된 Graph node |
+| `last_event_at` | 마지막 관측 이벤트 시각 |
+| `progress_label` | 사용자에게 보여줄 짧은 진행 상태 문구 |
 | `status` | `running`, `completed`, `needs_human_review`, `blocked`, `failed` |
 | `warnings` | 계속 진행 가능한 경고 |
 | `blocked_reasons` | 최종 출력을 막은 이유 |
@@ -215,10 +226,32 @@ class DataStatus(StrEnum):
     MISSING_COST = "missing_cost"
 
 
+class RevisionReviewAction(StrEnum):
+    APPROVE = "approve"
+    REJECT = "reject"
+    REQUEST_CHANGES = "request_changes"
+
+
 class SourceRef(BaseModel):
     source_id: str
     source_type: Literal["document", "chunk", "external", "calculation"]
     citation_label: str | None = None
+
+
+class ReportSection(BaseModel):
+    section_id: str
+    title: str
+    status: VerificationStatus
+    display_order: int
+    source_refs: list[SourceRef] = Field(default_factory=list)
+    hidden_reason: str | None = None
+
+
+class ReportAction(BaseModel):
+    action_id: str
+    label: str
+    action_type: Literal["upload", "select", "approve", "reject", "request_changes", "retry"]
+    required_input_schema: dict[str, Any] = Field(default_factory=dict)
 
 
 class PortfolioHolding(BaseModel):
@@ -242,6 +275,9 @@ class VerificationResult(BaseModel):
     language_checks: list[dict[str, Any]] = Field(default_factory=list)
     staleness_checks: list[dict[str, Any]] = Field(default_factory=list)
     required_fixes: list[str] = Field(default_factory=list)
+    required_inputs: list[str] = Field(default_factory=list)
+    safe_sections: list[str] = Field(default_factory=list)
+    hidden_sections: list[str] = Field(default_factory=list)
     quality_score: int = Field(ge=0, le=100)
 ```
 
@@ -296,6 +332,9 @@ class VerificationResult(BaseModel):
   "language_checks": [],
   "staleness_checks": [],
   "required_fixes": ["claim_003에 source_refs를 추가하거나 주장을 제거한다."],
+  "required_inputs": ["claim_003의 원문 출처를 제공하거나 해당 주장을 제거한다."],
+  "safe_sections": ["portfolio_weights"],
+  "hidden_sections": ["unsupported_claims"],
   "quality_score": 72
 }
 ```

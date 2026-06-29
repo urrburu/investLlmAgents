@@ -47,6 +47,7 @@
 - `verification_status`가 `passed`가 아니면 최종 리포트가 아니라 검토 요청으로 출력한다. 상태값은 [07-data-contracts.md](07-data-contracts.md)의 Canonical 상태 enum을 따른다.
 - 최신성이 중요한 데이터는 `as_of`를 표시한다.
 - 금지 표현 검사를 통과하지 못한 문장은 Persona Formatter로 보내지 않는다.
+- 사용자에게 보이는 리포트, revision 승인, rescue 응답의 정보 구조는 [09-product-design.md](09-product-design.md)를 따른다.
 
 ---
 

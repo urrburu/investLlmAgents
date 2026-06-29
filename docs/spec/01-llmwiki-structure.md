@@ -81,7 +81,9 @@ Agent는 위키 페이지를 바로 덮어쓰지 않는다. 모든 변경은 rev
 | `rejected` | 근거 부족 또는 정책 위반으로 폐기된 초안 |
 | `accepted` | 사용자가 승인해 현재 위키에 반영된 revision |
 
-Revision에는 `revision_id`, `page_id`, `change_summary`, `before_refs`, `after_refs`, `verification_result_id`, `created_by_agent`, `created_at`을 남긴다.
+Revision에는 `revision_id`, `page_id`, `change_summary`, `before_refs`, `after_refs`, `diff_summary`, `verification_result_id`, `review_actions`, `requested_changes`, `created_by_agent`, `created_at`을 남긴다.
+
+사용자 검토 action은 `approve`, `reject`, `request_changes` 중 하나다. `approve`가 기록되기 전까지 현재 위키 본문은 바뀌지 않는다.
 
 ## PostgreSQL 저장 계약
 

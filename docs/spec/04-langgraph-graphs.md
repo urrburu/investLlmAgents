@@ -31,6 +31,9 @@ class AgentRunState(TypedDict, total=False):
     revision_id: str | None
     verification_result_id: str | None
     verification_status: str
+    current_node: str | None
+    last_event_at: str | None
+    progress_label: str | None
     warnings: list[str]
     missing_inputs: list[str]
     blocked_reasons: list[str]

@@ -40,6 +40,7 @@ uv run uvicorn main:app --reload
 3. [LangGraph Graph 설계](docs/spec/04-langgraph-graphs.md)의 Wiki Indexing happy path를 프로토타입으로 만든다.
 4. [검증 및 안전 스펙](docs/spec/08-verification-and-safety.md)의 citation/금지 표현 검사를 먼저 붙인다.
 5. [출력 제약 및 MVP 경계](docs/spec/06-output-constraints.md)의 품질 게이트를 통과하지 못하면 최종 리포트로 승격하지 않는다.
+6. [제품 디자인 스펙](docs/spec/09-product-design.md)의 Markdown 리포트, revision 승인, rescue 응답 구조를 사용자-facing 출력의 기준으로 삼는다.
 
 ## 문서
 
@@ -50,6 +51,7 @@ uv run uvicorn main:app --reload
 | [docs/spec/04-langgraph-graphs.md](docs/spec/04-langgraph-graphs.md) | Graph 흐름과 node/Skill 매핑 |
 | [docs/spec/07-data-contracts.md](docs/spec/07-data-contracts.md) | Agent와 Skill이 공유하는 데이터 계약과 PostgreSQL 테이블 매핑 |
 | [docs/spec/08-verification-and-safety.md](docs/spec/08-verification-and-safety.md) | 검증 상태, 오류 코드, rescue payload |
+| [docs/spec/09-product-design.md](docs/spec/09-product-design.md) | 사용자-facing 리포트 구조, revision 승인 UX, 상태 표현 |
 | [docs/spec/TODOS.md](docs/spec/TODOS.md) | 남은 결정과 다음 구현 작업 |
 
 ## 개발자 체크
