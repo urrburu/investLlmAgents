@@ -47,6 +47,7 @@ uv run uvicorn main:app --reload
 | 문서 | 역할 |
 |---|---|
 | [docs/spec/README.md](docs/spec/README.md) | 스펙 문서 인덱스 |
+| [docs/langgraph-usage.md](docs/langgraph-usage.md) | LangGraph 기본 사용법과 이 프로젝트 적용 가이드 |
 | [docs/spec/00-overview.md](docs/spec/00-overview.md) | 제품 정의와 계층 구조 |
 | [docs/spec/04-langgraph-graphs.md](docs/spec/04-langgraph-graphs.md) | Graph 흐름과 node/Skill 매핑 |
 | [docs/spec/07-data-contracts.md](docs/spec/07-data-contracts.md) | Agent와 Skill이 공유하는 데이터 계약과 PostgreSQL 테이블 매핑 |
