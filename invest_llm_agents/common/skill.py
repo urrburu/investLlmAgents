@@ -47,15 +47,66 @@ class SkillOutput(ContractModel):
         )
 
     @classmethod
+    def partial(
+        cls,
+        data: dict[str, Any] | None = None,
+        *,
+        effect: SkillEffect = SkillEffect.PURE,
+        source_refs: list[SourceRef] | None = None,
+        warnings: list[str] | None = None,
+    ) -> "SkillOutput":
+        return cls(
+            status=SkillStatus.PARTIAL,
+            effect=effect,
+            data=data or {},
+            source_refs=source_refs or [],
+            warnings=warnings or [],
+        )
+
+    @classmethod
+    def needs_human_review(
+        cls,
+        error_code: ErrorCode,
+        message: str,
+        *,
+        details: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        effect: SkillEffect = SkillEffect.PURE,
+        source_refs: list[SourceRef] | None = None,
+        warnings: list[str] | None = None,
+    ) -> "SkillOutput":
+        return cls(
+            status=SkillStatus.NEEDS_HUMAN_REVIEW,
+            effect=effect,
+            data=data or {},
+            source_refs=source_refs or [],
+            warnings=warnings or [],
+            error=SkillError(
+                error_code=error_code,
+                message=message,
+                details=details or {},
+                recoverable=True,
+            ),
+        )
+
+    @classmethod
     def blocked(
         cls,
         error_code: ErrorCode,
         message: str,
         *,
         details: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        effect: SkillEffect = SkillEffect.PURE,
+        source_refs: list[SourceRef] | None = None,
+        warnings: list[str] | None = None,
     ) -> "SkillOutput":
         return cls(
             status=SkillStatus.BLOCKED,
+            effect=effect,
+            data=data or {},
+            source_refs=source_refs or [],
+            warnings=warnings or [],
             error=SkillError(
                 error_code=error_code,
                 message=message,
@@ -63,4 +114,3 @@ class SkillOutput(ContractModel):
                 recoverable=False,
             ),
         )
-
